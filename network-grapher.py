@@ -2,6 +2,7 @@
 
 import collections
 import httplib
+import socket
 import unittest
 
 def fetch_neighbors(hostport):
@@ -9,6 +10,7 @@ def fetch_neighbors(hostport):
     conn.request("GET", "/neighbours")
     r1 = conn.getresponse()
     data1 = r1.read()
+    conn.close()
     if r1.status != 200:
         raise RuntimeError("Error {0} {1} from {2}".format(r1.status, r1.reason, hostport))
     else:
@@ -49,17 +51,22 @@ def probe_network(known_servers):
     while len(to_check):
         server = to_check.popleft()
         if server not in graph:
-            neighbors = fetch_neighbors(server)
-            graph[server] = neighbors
-            for n in neighbors:
-                if n not in graph:
-                    print "new node {0}".format(n)
-                    to_check.append(n)
+            try:
+                neighbors = fetch_neighbors(server)
+                graph[server] = neighbors
+                for n in neighbors:
+                    if n not in graph:
+                        to_check.append(n)
+            except socket.error as e:
+                graph[server] = e
     return graph
 
 def print_graph(graph):
     for server,neighbors in graph.iteritems():
-        print "{0} -> {{ {1} }}".format(server, ",".join(neighbors))
+        if isinstance(neighbors, socket.error):
+            print "{0} -> {1}".format(server, repr(neighbors))
+        else:
+            print "{0} -> {{ {1} }}".format(server, ",".join(neighbors))
 
 if __name__ == "__main__":
 
