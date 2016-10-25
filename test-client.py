@@ -1,11 +1,20 @@
 #!/usr/bin/env python
 
+import argparse
 import collections
 import httplib
 import sys
 import time
 import unittest
 
+def parse_args(args=None):
+    parser = argparse.ArgumentParser(prog="test-client",
+            description="Quick and dirty test client to fire up new network nodes")
+
+    parser.add_argument("origin_node",
+            help="starter node to connect to first")
+
+    return parser.parse_args()
 
 def start_new_node(via_node):
     sys.stdout.write("Asking {0} to start a new node... ".format(via_node))
@@ -67,7 +76,8 @@ def print_status():
 
 if __name__ == "__main__":
 
-    origin_node = "localhost:8000"
+    args = parse_args()
+    origin_node = args.origin_node
     start_many_via_origin(origin_node, 5, wait=2)
     print_status()
 

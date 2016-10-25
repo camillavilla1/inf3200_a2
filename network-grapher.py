@@ -1,9 +1,19 @@
 #!/usr/bin/env python
 
+import argparse
 import collections
 import httplib
 import socket
 import unittest
+
+def parse_args(args=None):
+    parser = argparse.ArgumentParser(prog="network-grapher",
+            description="Quick and dirty utility to find which nodes are connected to what other nodes")
+
+    parser.add_argument("node",
+            help="starter node to connect to first")
+
+    return parser.parse_args()
 
 def fetch_neighbors(hostport):
     conn = httplib.HTTPConnection(hostport)
@@ -70,6 +80,6 @@ def print_graph(graph):
 
 if __name__ == "__main__":
 
-    hostport = "localhost:8000"
-    graph = probe_network([hostport])
+    args = parse_args()
+    graph = probe_network([args.node])
     print_graph(graph)
