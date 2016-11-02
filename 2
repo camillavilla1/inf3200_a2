@@ -21,42 +21,29 @@ class Node():
     def __init__(self, ip, port):
         #pass
         #self.n_id = n_id
-        self.created = 0
-        self.creator = ""
         self.neighbours = []
         self.ip = ip
         self.port = port
-        self.address = str(self.ip) + ":" + str(self.port)
 
-    def add(self, stdout=subprocess.PIPE, stderr=subprocess.PIPE, wait=False):
+    def add(host, commandline, stdout=None, stderr=None, wait=False):
         #like launch in launch.py in first assignment
         cwd = os.getcwd()
-        if self.ip == 'localhost':
-            commandline = "./node.py --port=%d --creator=%s" % (cur_port, self.address)
+        if host == 'localhost':
+            pass
         else:
             commandline = "ssh -f %s 'cd %s; %s'" % (host, cwd, commandline)
 
-        print(commandline)
+        print commandline
         process = subprocess.Popen(commandline, shell=True, stdout=stdout, stderr=stderr)
         if wait:
             process.wait()
 
-    def is_created(self, args):
-        if (args.creator):
-            self.created = 1
-            self.creator = args.created
-            self.neighbours.append(self.creator)
-            
-            # conn = httplib.HTTPConnection(self.creator)
-            # conn.request('POST', '/update')
-            # print "CREATOR U THERE MAYNE?"
-            # # conn.request('PUT', '/info', (self.ip, self.port))
-            # conn.getresponse()
-            # conn.closer()
+        pass
 
+        #return ip:port of new node
 
     def shutdown():
-        shutdown_server_on_signal()
+        pass
         #might notify neighbours
 
     def neighbours():
@@ -80,78 +67,45 @@ class Handler(BaseHTTPRequestHandler):
             #responsebody "127.0.0.1:1234, 127.0.0.1:5678 ..."
             pass
 
-        
 
-
-        #self.send_response(200)
-        #self.end_headers()
+        self.send_response(200)
+        self.end_headers()
         #message =  threading.currentThread().getName()
-        #message = "dildo"
-        #self.wfile.write(message)
-        #self.wfile.write('\n')
-        #return
-
-
-    def do_PUT(self):
-        key = self.extract_key_from_path(self.path)
-        #content_length = int(self.headers.getheader('content-length', 0))
-
-        if (key == "info"):
-            value = self.rfile.read()
-            print value
-            self.send_response(200)
-            self.end_headers()
-
-            node.neighbours.append(value)
-
-            print node.neighbours
-            
-
+        message = "dildo"
+        self.wfile.write(message)
+        self.wfile.write('\n')
+        return
 
     def do_POST(self):
         key = self.extract_key_from_path(self.path)
         self.send_response(200)
         self.end_headers()
+        print("Key:" + key)
         if (key == "addNode"):
-            #ode = Node("127.0.0.1", "8081")
-            #n_ip, n_port = node.add()
+            print("Added node")
+            #node = Node("127.0.0.1", "8081")
             node.add()
-            global cur_port
-            
-            #value = node.neighbours[-1]
-            address = node.ip + ":" + str(cur_port)
-            node.neighbours.append(address)
-
-            self.wfile.write(address)
-            cur_port += 1
-
-        if (key == "update"):
-            #print node.neighbours
-            #self.wfile.write(node.neighbours)
-
             #node.add(node.host, "./node.py --port=%d --nameserver=%s" % (node.port, nameserver))
             #responsebody "127.0.0.1:1234"
-        if (key == "shutdown"):
-            node.shutdown()
+        if (key == "/shutdown"):
+            pass
+            #node.shutdown()
         
 
-        #message = (n_ip, n_port)
+        message = (node.ip, node.port)
 
 
-        #self.wfile.write(message)
+        self.wfile.write(message)
 
 
 
 def parse_args():
-    #PORT_DEFAULT = 8080
-    PORT_DEFAULT = cur_port
+    PORT_DEFAULT = 8080
     DIE_AFTER_SECONDS_DEFAULT = 20 * 60
     parser = argparse.ArgumentParser(prog="node", description="DHT Node")
 
     parser.add_argument("-p", "--port", type=int, default=PORT_DEFAULT,
             help="port number to listen on, default %d" % PORT_DEFAULT)
-
-    parser.add_argument("-c", "--creator", type=str)
 
     parser.add_argument("--die-after-seconds", type=float,
             default=DIE_AFTER_SECONDS_DEFAULT,
@@ -174,29 +128,18 @@ if __name__ == '__main__':
     args = parse_args()
     address = "%s:%d" % (socket.gethostname(), args.port)
 
-    node = Node("localhost", args.port)
-    node.is_created(args)
+    node = Node("localhost", str(cur_port))
 
-    if (node.created == 0):
-        cur_port += 1
-
-    not_initiated = 1
-
-    while (not_initiated):
-        try:
-            server = ThreadedHTTPServer(('', args.port), Handler)
-            not_initiated = 0
-        except socket.error, exc:
-            print ("Caught exception socket.error : %s" % exc)
-            args.port += 1
+    cur_port += 1
 
 
-
+    server = ThreadedHTTPServer(('', args.port), Handler)
     #server = ThreadedHTTPServer(('localhost', 8080), Handler)
     def run_server():
         print 'Starting server, use <Ctrl-C> to stop'
         server.serve_forever()  
         print "Server has shut down"
+
 
 
     def shutdown_server_on_signal(signum, frame):
@@ -208,8 +151,7 @@ if __name__ == '__main__':
     # and HTTPServer.shutdown() must be called from separate threads
     #before killing/shut down a node, we need to start a new thread?!
     #different threads must kill each other
-    thread = threading.Thread(target=server)
-    #thread = threading.Thread(target=run_server)
+    thread = threading.Thread(target=run_server)
     thread.daemon = True
     thread.start()
 
