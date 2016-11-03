@@ -106,9 +106,11 @@ class Handler(BaseHTTPRequestHandler):
             node = Node(ip, port)
             node.set_successor(node.address)
             node.set_predecessor(node.address)
-            self.wfile.write("Initiated node on %s:%s \n " % (str(ip), str(port)))
+            print node.address
+            self.wfile.write("Initiated node on %s\n " % node.address)
 
         if (key == "addNode"):
+            print "inside addNode"
             ip, port = find_free_ip()
             node.add(ip, port)
             self.wfile.write("Initiated node on %s:%s \n " % (str(ip), str(port)))
@@ -121,20 +123,33 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def find_free_ip(first_node=False):
-    if (first_node == True):
-        ip = "localhost"
-        n_port = 8080
-        return ip, n_port
-    else:
-        ip = "localhost"
-        global port
-        port = port + 1
-        return ip, port
+    
+    commandline = "sh find_node.sh 1"
+    process = subprocess.Popen(commandline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = process.communicate()
+
+    ip = output[0]
+    ip = ip.strip(' \n')
+    port = 8088
+
+    return ip, port
+
+    # if (first_node == True):
+        # ip = "localhost"
+        # n_port = 8080
+        # return ip, n_port
+    # else:
+        # ip = "localhost"
+        # global port
+        # port = port + 1
+        # return ip, port
 
 
 def parse_args():
     PORT_DEFAULT = 8080
     parser = argparse.ArgumentParser(prog="node", description="Node in a cluster")
+
+    parser.add_argument("-i", "--ip", type=str, default="localhost")
 
     parser.add_argument("-p", "--port", type=int, default=PORT_DEFAULT,
             help="port number to listen on, default %d" % PORT_DEFAULT)
@@ -167,16 +182,19 @@ if __name__ == '__main__':
         node.update_successor(new_succ)
 
         print "Node created on %s:%s \n" % (str(ip), str(port))
-
+    else:
+        node = Node(args.ip, args.port)
+        node.set_successor(node.address)
+        node.set_predecessor(node.address)
+        print node.address
 
     try:
-        server = ThreadedHTTPServer(('', args.port), Handler)
+        print "node IP : %s" % node.ip
+        server = ThreadedHTTPServer((node.ip, node.port), Handler)
+        print "Server started!!"
     except socket.error, exc:
         print ("Caught exception socket.eroor: %s" % exc)
         #args.port += 1
-
-    print 'Starting server, use <Ctrl-C> to stop'
-    server.serve_forever()
 
     def run_server():
         print 'Starting server, use <Ctrl-C> to stop'
@@ -187,7 +205,7 @@ if __name__ == '__main__':
         print "We get signal (%s). Asking server to shut down" % signum
         server.shutdown()
 
-    thread = threading.Thread(target=server)
+    thread = threading.Thread(target=run_server)
     thread.daemon = True
     thread.start()
 
@@ -196,6 +214,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, shutdown_server_on_signal)
     signal.signal(signal.SIGINT, shutdown_server_on_signal)
 
+    thread.join(20)
 
 
 

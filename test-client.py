@@ -19,6 +19,7 @@ def parse_args(args=None):
 def start_new_node(via_node):
     sys.stdout.write("Asking {0} to start a new node... ".format(via_node))
     sys.stdout.flush()
+    print via_node
     conn = httplib.HTTPConnection(via_node)
     conn.request("POST", "/addNode")
     r1 = conn.getresponse()
