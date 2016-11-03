@@ -19,7 +19,6 @@ def parse_args(args=None):
 def start_new_node(via_node):
     sys.stdout.write("Asking {0} to start a new node... ".format(via_node))
     sys.stdout.flush()
-    print via_node
     conn = httplib.HTTPConnection(via_node)
     conn.request("POST", "/addNode")
     r1 = conn.getresponse()
@@ -82,5 +81,5 @@ if __name__ == "__main__":
     start_many_via_origin(origin_node, 5, wait=2)
     print_status()
 
-    shutdown_all()
-    print_status()
+    #shutdown_all()
+    #print_status()

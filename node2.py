@@ -18,6 +18,7 @@ class Node():
         self.address = 		str(self.ip) + ":" + str(self.port)
         self.successor =	""
         self.predecessor = 	""
+        self.neighbours =       [self.successor, self.predecessor]
 
     def set_successor(self, address):
         self.successor = address
@@ -46,7 +47,11 @@ class Node():
         conn.request('POST', '/update_predecessor', node.address)
         conn.getresponse()
         conn.close()
-    
+
+    def update_connections(self, new_successor):
+
+        pass
+
 
 
     def print_neighbours(self):
@@ -56,16 +61,17 @@ class Node():
     def add(self, ip, port):
         if self.ip == 'localhost':
             commandline = "./node2.py --port=%d --creator=%s" % (port, self.address)
+        else:
+            commandline = "./node2.pu --ip=%s --port=%d --creator=%s" % (ip, port, self.address)
 
-            process = subprocess.Popen(commandline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(commandline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        newnode_address = ip+":"+str(port)
+        self.successor = newnode_address
 
-            newnode_address = "localhost"+":"+str(port)
-            #Set successor to new node
-            self.successor = newnode_address
-
-            if self.predecessor == self.address:
-                self.predecessor = newnode_address
-            self.print_neighbours()
+        if self.predecessor == self.address:
+            self.predecessor = newnode_address
+        print "Printing neighbours"
+        self.print_neighbours()
 
 
 
@@ -86,6 +92,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if (key == 'get_creator_predecessor'):
             self.wfile.write(node.predecessor)
+
+        if (key == 'neighbours'):
+            neighbours = "%s\n%s" % (node.predecessor, node.successor)
+            self.wfile.write(neighbours)
 
 
         pass
@@ -112,13 +122,19 @@ class Handler(BaseHTTPRequestHandler):
         if (key == "addNode"):
             print "inside addNode"
             ip, port = find_free_ip()
+            address = ip + ":" + str(port)
+            global node
             node.add(ip, port)
+
             self.wfile.write("Initiated node on %s:%s \n " % (str(ip), str(port)))
+            node.update_connections(address)
 
         if (key == "update_predecessor"):
+            print "inside update_predecessor"
             address = self.rfile.read()
             node.set_predecessor(address)
             self.wfile.write("Updated predecessor\n")
+
 
 
 
@@ -214,7 +230,11 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, shutdown_server_on_signal)
     signal.signal(signal.SIGINT, shutdown_server_on_signal)
 
-    thread.join(20)
+    thread.join(20*60)
+    if thread.isAlive():
+        print "Reached %.3f second timeout. Asking server to shut down" % 20*60
+        server.shutdown()
 
+    print "Exited cleanly"
 
 
