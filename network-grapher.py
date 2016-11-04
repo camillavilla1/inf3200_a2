@@ -22,8 +22,10 @@ def fetch_neighbors(hostport):
     data1 = r1.read()
     conn.close()
     if r1.status != 200:
+        print ("Status is not OK")
         raise RuntimeError("Error {0} {1} from {2}".format(r1.status, r1.reason, hostport))
     else:
+        print "about to parse neighbours"
         return parse_neighbors(data1)
 
 def parse_neighbors(neighborstring):
@@ -35,21 +37,25 @@ def parse_neighbors(neighborstring):
 
 class ParseTests(unittest.TestCase):
     def test_zero_neighbors(self):
+        print "zero neighbours"
         self.assertEqual(
                 parse_neighbors(""),
                 [])
 
     def test_one_neighbor(self):
+        print "one neighbours"
         self.assertEqual(
                 parse_neighbors("localhost:8000"),
                 ["localhost:8000"])
 
     def test_two_neighbors(self):
+        print "two neighbours"
         self.assertEqual(
                 parse_neighbors("localhost:8000\nlocalhost:8001"),
                 ["localhost:8000", "localhost:8001"])
 
     def test_three_neighbors(self):
+        print "three neighbours"
         self.assertEqual(
                 parse_neighbors("localhost:8000\nlocalhost:8001\nlocalhost:8002"),
                 ["localhost:8000", "localhost:8001", "localhost:8002"])

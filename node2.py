@@ -13,12 +13,12 @@ global node
 
 class Node():
     def __init__(self, ip, port):
-        self.ip = 		ip
-        self.port = 		port
-        self.address = 		str(self.ip) + ":" + str(self.port)
-        self.successor =	""
-        self.predecessor = 	""
-        self.neighbours =       [self.successor, self.predecessor]
+        self.ip = ip
+        self.port = port
+        self.address = str(self.ip) + ":" + str(self.port)
+        self.successor = ""
+        self.predecessor = ""
+        self.neighbours = [self.successor, self.predecessor]
 
     def set_successor(self, address):
         self.successor = address
@@ -62,7 +62,8 @@ class Node():
         if self.ip == 'localhost':
             commandline = "./node2.py --port=%d --creator=%s" % (port, self.address)
         else:
-            commandline = "./node2.pu --ip=%s --port=%d --creator=%s" % (ip, port, self.address)
+            print "choosing second version of commandline!!!"
+            commandline = "./node2.py --ip=%s --port=%d --creator=%s" % (ip, port, self.address)
 
         process = subprocess.Popen(commandline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         newnode_address = ip+":"+str(port)
@@ -70,7 +71,6 @@ class Node():
 
         if self.predecessor == self.address:
             self.predecessor = newnode_address
-        print "Printing neighbours"
         self.print_neighbours()
 
 
@@ -95,10 +95,13 @@ class Handler(BaseHTTPRequestHandler):
 
         if (key == 'neighbours'):
             neighbours = "%s\n%s" % (node.predecessor, node.successor)
+            print ("[GET] node ip: %s, node port: %s, [address: %s]" % (node.ip, node.port, node.address))
+            print "Neighbours: [", neighbours,"]"
+            #self.send_response(200)
+            #self.end_headers()
+            #neighbours =  threading.currentThread().getName()
             self.wfile.write(neighbours)
 
-
-        pass
 
     def do_PUT(self):
         pass
@@ -112,6 +115,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if (key == "firstNode"):
             ip, port = find_free_ip(first_node=True)
+            print "port: %d" % port
             global node
             node = Node(ip, port)
             node.set_successor(node.address)
@@ -187,7 +191,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     if args.creator:
-        ip, port = find_free_ip(port=args.port)
+        ip, port = find_free_ip()
         node = Node(ip, port)
 
         new_succ = node.get_creator_successor(args.creator)
@@ -206,10 +210,11 @@ if __name__ == '__main__':
 
     try:
         print "node IP : %s" % node.ip
+        print "node HOST: %s" % node.port
         server = ThreadedHTTPServer((node.ip, node.port), Handler)
         print "Server started!!"
     except socket.error, exc:
-        print ("Caught exception socket.eroor: %s" % exc)
+        print ("Caught exception socket.error: %s" % exc)
         #args.port += 1
 
     def run_server():
