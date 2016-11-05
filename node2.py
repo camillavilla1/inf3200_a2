@@ -23,6 +23,7 @@ class Node():
         self.predecessor = ""
         self.neighbours = [self.successor, self.predecessor]
         self.response = 0
+        self.lastport = port
 
     def set_successor(self, address):
         self.successor = address
@@ -49,14 +50,14 @@ class Node():
     def update_successor(self, c_address):
         conn = httplib.HTTPConnection(c_address)
         #conn.request('POST', '/update_predecessor', node.address)
-        conn.request('PUT', '/update_predecessor', node.address)
+        conn.request('POST', '/update_predecessor', node.address)
         conn.getresponse()
         conn.close()
 
     def update_predecessor(self, c_address):
         conn = httplib.HTTPConnection(c_address)
         #conn.request('POST', '/update_successor', node.address)
-        conn.request('PUT', '/update_successor', node.address)
+        conn.request('POST', '/update_successor', node.address)
         conn.getresponse()
         conn.close()
 
@@ -80,28 +81,24 @@ class Node():
             commandline = "./node2.py --port=%d --creator=%s" % (port, self.address)
         else:
             cwd = os.getcwd()
-            #print cwd
-            #print "choosing second version of commandline!!!"
             commandline = "./node2.py --ip=%s --port=%d --creator=%s" % (ip, port, self.address)
             commandline = "ssh -f %s 'cd %s; %s'" % (ip, cwd, commandline)
-            #print commandline
 
         #process = subprocess.Popen(commandline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         process = subprocess.Popen(commandline, shell=True, stdout=None, stderr=None)
 
-        if wait:
-            process.wait()
+        while(node.response == 0):
+            pass
+        self.response = 0
 
-        # while(node.response==0):
-            # pass
-        # self.response = 0
-
-        newnode_address = ip+":"+str(port)
+        newnode_address = ip+":"+str(self.lastport)
         self.successor = newnode_address
 
         if self.predecessor == self.address:
             self.predecessor = newnode_address
         self.print_neighbours()
+
+        return self.successor
 
 
 
@@ -138,39 +135,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_PUT(self):
         key = self.extract_key_from_path(self.path)
-        value = self.rfile.read()
+
+        node.response = 1
+        node.lastport = int(key)
 
         self.send_response(200)
         self.end_headers()
 
-        if key == "update_port":
-            value = value.split(":")
-            port = value[1]
-            print port
-
-            #node.port = port
-
-        # if (key == "update_predecessor"):
-            # print "inside update_predecessor"
-            # #print "address: %s" % address
-            # address = self.rfile.read()
-            # print "Address:"
-            # print address
-            # node.set_predecessor(address)
-            # node.response = 1
-            # self.wfile.write("Updated predecessor\n")
-
-        # if (key == "update_successor"):
-            # print "inside update_successor"
-
-            # address = self.rfile.read()
-            # print "Address:"
-            # print address
-            # node.set_successor(address)
-            # node.response = 1
-            # self.wfile.write("Updated successor\n")
-            
-
+        # if key == "update_port":
+            # value = value.split(":")
+            # port = value[1]
+            # print port
 
 
     def do_POST(self):
@@ -193,14 +168,13 @@ class Handler(BaseHTTPRequestHandler):
         if (key == "addNode"):
             print "inside addNode"
             ip, port = find_free_ip()
-            address = ip + ":" + str(port)
-            print address
+            #address = ip + ":" + str(port)
             #global node
-            node.add(ip, port)
+            address = node.add(ip, port)
+            print address
             #time.sleep(2000)
-            tmp = ip + ":"+ str(port)
             #tmp = node.successor
-            self.wfile.write(tmp)
+            self.wfile.write(address)
             #self.wfile.write("Initiated node on %s:%s \n " % (str(ip), str(port)))
             print "Added node, should update connections"
             #node.update_connections(address, node.predecessor)
@@ -236,21 +210,9 @@ def find_free_ip(first_node=False):
     ip = output[0]
     ip = ip.strip(' \n')
     port = 8088
-    #port = 45763
 
     return ip, port
-
-    # if (first_node == True):
-        # ip = "localhost"
-        # n_port = 8080
-        # return ip, n_port
-    # else:
-        # ip = "localhost"
-        # global port
-        # port = port + 1
-        # return ip, port
-
-
+    
 def parse_args():
     PORT_DEFAULT = 8080
     parser = argparse.ArgumentParser(prog="node", description="Node in a cluster")
@@ -279,18 +241,9 @@ if __name__ == '__main__':
     newport = 0
 
     if args.creator:
-        #ip, port = find_free_ip()
-        #node = Node(ip, port)
         newip= args.ip
         newport = args.port
-
-        #node.set_successor(new_succ)
-        #node.set_predecessor(args.creator)
-        # Updated the successor of this node, by setting the
-        # predecessor value of the successor to the current node!
-
     else:
-        #node = Node(args.ip, args.port)
         newip = args.ip
         newport = args.port
 
@@ -298,10 +251,8 @@ if __name__ == '__main__':
 
     while server is None:
         try:
-            #print "node IP : %s" % node.ip
-            #print "node HOST: %s" % node.port
             server = ThreadedHTTPServer((newip, newport), Handler)
-            print "Server started!!"
+            print "Server started!! on %s" % str(newip) + ":" + str(newport)
         except socket.error, exc:
             print ("Caught exception socket.error: %s" % exc)
             newport += 1
@@ -312,23 +263,21 @@ if __name__ == '__main__':
         new_succ = node.get_creators_successor(args.creator)
         node.update_connections(new_succ, args.creator)
         node.update_successor(new_succ)
-        node.update_predecessor(args.creator)
-        #node.print_neighbours()
-        print "Node created on %s:%s \n" % (str(ip), str(port))
-
+        
         conn = httplib.HTTPConnection(args.creator)
-        conn.request('PUT', '/update_port', node.address)
+        conn.request("PUT", "/"+str(newport))
         conn.getresponse()
         conn.close()
 
 
+        #node.update_predecessor(args.creator)
+        #node.print_neighbours()
+        print "Node created on %s:%s \n" % (str(newip), str(newport))
     else:
         node = Node(newip, newport)
         node.set_successor(node.address)
         node.set_predecessor(node.address)
         print node.address
-
-
 
     def run_server():
         print 'Starting server, use <Ctrl-C> to stop'

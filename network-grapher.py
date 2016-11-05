@@ -16,12 +16,10 @@ def parse_args(args=None):
     return parser.parse_args()
 
 def fetch_neighbors(hostport):
-    print "in fetch_neighbours %s" % hostport
     conn = httplib.HTTPConnection(hostport)
     conn.request("GET", "/neighbours")
     r1 = conn.getresponse()
     data1 = r1.read()
-    print data1
     conn.close()
     if r1.status != 200:
         print ("Status is not OK")
@@ -91,5 +89,4 @@ if __name__ == "__main__":
 
     args = parse_args()
     graph = probe_network([args.node])
-    print graph
     print_graph(graph)
