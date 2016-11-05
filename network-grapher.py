@@ -25,7 +25,7 @@ def fetch_neighbors(hostport):
         print ("Status is not OK")
         raise RuntimeError("Error {0} {1} from {2}".format(r1.status, r1.reason, hostport))
     else:
-        print "about to parse neighbours"
+        print "about to parse neighbours from hostport: %s" % hostport
         return parse_neighbors(data1)
 
 def parse_neighbors(neighborstring):
@@ -80,6 +80,7 @@ def probe_network(known_servers):
 def print_graph(graph):
     for server,neighbors in graph.iteritems():
         if isinstance(neighbors, socket.error):
+            print "hello"
             print "{0} -> {1}".format(server, repr(neighbors))
         else:
             print "{0} -> {{ {1} }}".format(server, ",".join(neighbors))
