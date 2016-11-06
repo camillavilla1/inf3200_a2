@@ -49,23 +49,19 @@ class Node():
 
     def update_successor(self, c_address):
         conn = httplib.HTTPConnection(c_address)
-        #conn.request('POST', '/update_predecessor', node.address)
         conn.request('POST', '/update_predecessor', node.address)
         conn.getresponse()
         conn.close()
 
     def update_predecessor(self, c_address):
         conn = httplib.HTTPConnection(c_address)
-        #conn.request('POST', '/update_successor', node.address)
         conn.request('POST', '/update_successor', node.address)
         conn.getresponse()
         conn.close()
 
     def update_connections(self, new_successor, new_predecessor):
         self.successor = new_successor
-        #self.set_successor(new_successor)
         self.predecessor = new_predecessor
-        #self.set_predecessor(new_predecessor)
 
         #update conn to the new node, set succ and prede
         #node.successor = new_successor
@@ -84,7 +80,6 @@ class Node():
             commandline = "./node2.py --ip=%s --port=%d --creator=%s" % (ip, port, self.address)
             commandline = "ssh -f %s 'cd %s; %s'" % (ip, cwd, commandline)
 
-        #process = subprocess.Popen(commandline, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         process = subprocess.Popen(commandline, shell=True, stdout=None, stderr=None)
 
         while(node.response == 0):
@@ -113,23 +108,16 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text\plain')
         self.end_headers()
         if (key == 'get_creator_successor'):
-            print "Inside get_creator_successor"
             self.wfile.write(node.successor)	
 
         if (key == 'get_creator_predecessor'):
-            print "Insidet get_creator_predecessor"
             self.wfile.write(node.predecessor)
 
         if (key == 'neighbours'):
-            #neighbours = "%s\n%s" % (node.predecessor, node.successor)
             neighbours_list = []
             neighbours_list.append(node.predecessor)
             neighbours_list.append(node.successor)
             print "neighbour list: %s" % neighbours_list
-            print ("[GET] [address: %s]" % node.address)
-
-            #neighbours =  threading.currentThread().getName()
-            #self.wfile.write(neighbours)
             self.wfile.write("\n".join(sorted(set(neighbours_list))))
 
 
@@ -166,7 +154,6 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write("Initiated node on %s\n " % node.address)
 
         if (key == "addNode"):
-            print "inside addNode"
             ip, port = find_free_ip()
             #address = ip + ":" + str(port)
             #global node
@@ -175,27 +162,28 @@ class Handler(BaseHTTPRequestHandler):
             #time.sleep(2000)
             #tmp = node.successor
             self.wfile.write(address)
-            #self.wfile.write("Initiated node on %s:%s \n " % (str(ip), str(port)))
             print "Added node, should update connections"
             #node.update_connections(address, node.predecessor)
 
         if (key == "update_predecessor"):
-            print "inside update_predecessor"
-            #print "address: %s" % address
             address = self.rfile.read()
-            print "Address:"
             print address
             node.set_predecessor(address)
             self.wfile.write("Updated predecessor\n")
+            print "Updated predeccessor for adr: %s" % address
 
         if (key == "update_successor"):
-            print "inside update_successor"
-
             address = self.rfile.read()
-            print "Address:"
-            print address
             node.set_successor(address)
             self.wfile.write("Updated successor\n")
+            print "Updated successor for adr: %s" % address
+
+        if (key == "shutdown"):
+            address = self.rfile.read()
+            print "shutdown this nigga on adr %s" % address
+            #check neighbours before shutdown
+            shutdown_specific_server(server, address)
+            
             
 
 
@@ -288,12 +276,14 @@ if __name__ == '__main__':
         print "We get signal (%s). Asking server to shut down" % signum
         server.shutdown()
 
+
+    def shutdown_specific_server(server, address):
+        print "Asking server %s on address %s to shut down" % (server, address)
+        server.shutdown()    
+
     thread = threading.Thread(target=run_server)
     thread.daemon = True
     thread.start()
-
-
-
 
     signal.signal(signal.SIGTERM, shutdown_server_on_signal)
     signal.signal(signal.SIGINT, shutdown_server_on_signal)

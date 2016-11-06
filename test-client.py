@@ -81,5 +81,5 @@ if __name__ == "__main__":
     start_many_via_origin(origin_node, 5, wait=2)
     print_status()
 
-    #shutdown_all()
-    #print_status()
+    shutdown_all()
+    print_status()
