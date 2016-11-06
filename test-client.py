@@ -36,9 +36,13 @@ def start_new_node(via_node):
 def shutdown_node(target_node):
     print "Asking {0} to shutdown...".format(target_node)
     conn = httplib.HTTPConnection(target_node)
+    print "Connection established u dildo!"
     conn.request("POST", "/shutdown")
+    print "Sent shutdown request to %s" % target_node
     r1 = conn.getresponse()
     data1 = r1.read()
+    print "comeback data"
+    print data1
     conn.close()
     if r1.status != 200:
         raise RuntimeError("Shutodwn: Error {0} {1} from {2}".format(
@@ -63,6 +67,7 @@ def shutdown_all(wait=.2):
     print "Shutting down all nodes, with {0:.3f} second delay...".format(wait)
     while spawned_nodes:
         node = spawned_nodes.pop()
+        print node
         shutdown_node(node)
         time.sleep(wait)
 
@@ -78,8 +83,11 @@ if __name__ == "__main__":
 
     args = parse_args()
     origin_node = args.origin_node
-    start_many_via_origin(origin_node, 5, wait=2)
+    t0 = time.time()
+    start_many_via_origin(origin_node, 200, wait=.0005)
+    t1 = time.time() - t0
     print_status()
+    print "Time taken %d" % t1
 
-    shutdown_all()
-    print_status()
+    #shutdown_all()
+    #print_status()
