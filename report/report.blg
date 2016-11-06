@@ -1,0 +1,15 @@
+[0] Config.pm:340> INFO - This is Biber 2.4
+[0] Config.pm:343> INFO - Logfile is 'report.blg'
+[36] biber:287> INFO - === sø. nov.  6, 2016, 14:51:08
+[118] Biber.pm:348> INFO - Reading 'report.bcf'
+[275] Biber.pm:742> INFO - Found 2 citekeys in bib section 0
+[279] Biber.pm:3151> INFO - Processing section 0
+[331] Biber.pm:3308> INFO - Looking for bibtex format file 'report.bib' for section 0
+[342] bibtex.pm:1113> INFO - Decoding LaTeX character macros into UTF-8
+[345] bibtex.pm:974> INFO - Found BibTeX data source 'report.bib'
+[403] UCollate.pm:65> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[403] UCollate.pm:65> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[403] Biber.pm:3028> INFO - Sorting list 'none/global' of type 'entry' with scheme 'none' and locale 'en-US'
+[403] Biber.pm:3032> INFO - No sort tailoring available for locale 'en-US'
+[405] bbl.pm:519> INFO - Writing 'report.bbl' with encoding 'UTF-8'
+[411] bbl.pm:615> INFO - Output to report.bbl
