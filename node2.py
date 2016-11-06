@@ -83,8 +83,7 @@ class Node():
     def update_connections(self, new_successor, new_predecessor):
         self.successor = new_successor
         self.predecessor = new_predecessor
-        print "Current node adr: %s and [succ = %s] [pred = %s]" % (self.address, self.successor, self.predecessor)
-
+    
     def print_neighbours(self):
         print "successor: %s, predecessor: %s" % (self.successor, self.predecessor)
 
@@ -107,7 +106,7 @@ class Node():
 
         if self.predecessor == self.address:
             self.predecessor = newnode_address
-        self.print_neighbours()
+        #self.print_neighbours()
 
         return self.successor
 
@@ -117,13 +116,8 @@ class Node():
         if (self.predecessor != self.address):
             self.update_predecessor_shutdown(self.successor)
 
-        #if (self.successor == self.predecessor and self.successor != self.address):
-            #self.update_neighbour(self.successor)
-
         
-            
-
-
+        
 
 class Handler(BaseHTTPRequestHandler):
     def extract_key_from_path(self, path):
@@ -145,7 +139,6 @@ class Handler(BaseHTTPRequestHandler):
             neighbours_list = []
             neighbours_list.append(node.predecessor)
             neighbours_list.append(node.successor)
-            print "neighbour list: %s" % neighbours_list
             self.wfile.write("\n".join(sorted(set(neighbours_list))))
 
 
@@ -158,11 +151,6 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
-        # if key == "update_port":
-            # value = value.split(":")
-            # port = value[1]
-            # print port
-
 
     def do_POST(self):
         key = self.extract_key_from_path(self.path)
@@ -173,63 +161,32 @@ class Handler(BaseHTTPRequestHandler):
 
         if (key == "firstNode"):
             ip, port = find_free_ip(first_node=True)
-            #print "port: %d" % port
             global node
             node = Node(ip, port)
             node.set_successor(node.address)
             node.set_predecessor(node.address)
-            print node.address
-
-            # self.send_response(200)
-            # self.end_headers()
             self.wfile.write("Initiated node on %s\n " % node.address)
 
         if (key == "addNode"):
             ip, port = find_free_ip()
-            #address = ip + ":" + str(port)
-            #global node
             address = node.add(ip, port)
-            print address
-            #time.sleep(2000)
-            #tmp = node.successor
-
-            # self.send_response(200)
-            # self.end_headers()
             self.wfile.write(address)
-            print "Added node, should update connections"
-            #node.update_connections(address, node.predecessor)
 
         if (key == "update_predecessor"):
             address = self.rfile.read()
-            print address
             node.set_predecessor(address)
-            # self.send_response(200)
-            # self.end_headers()
             self.wfile.write("Updated predecessor\n")
-            print "Updated predeccessor for adr: %s" % address
 
         if (key == "update_successor"):
             address = self.rfile.read()
             node.set_successor(address)
-
-            # self.send_response(200)
-            # self.end_headers()
             self.wfile.write("Updated successor\n")
-            print "Updated successor for adr: %s" % address
+
 
         if (key == "shutdown"):
-            #address = self.rfile.read()
-            #print "shutdown this nigga on adr %s" % address
             self.wfile.write("Server is shutting down")
             node.shutdown_server()
-            #server.shutdown()
-            #node.shutdown_server()
-            #check neighbours before shutdown
             shutdown_specific_server(server)
-            # self.send_response(200)
-            # self.end_headers()
-
-
 
 
 def find_free_ip(first_node=False):
@@ -283,11 +240,10 @@ if __name__ == '__main__':
     while server is None:
         try:
             server = ThreadedHTTPServer((newip, newport), Handler)
-            print "Server started!! on %s" % str(newip) + ":" + str(newport)
+            print "Server started on %s" % str(newip) + ":" + str(newport)
         except socket.error, exc:
             print ("Caught exception socket.error: %s" % exc)
             newport += 1
-            #args.port += 1
 
     if args.creator:
         node = Node(newip, newport)
@@ -300,17 +256,11 @@ if __name__ == '__main__':
         conn.request("PUT", "/"+str(newport))
         conn.getresponse()
         conn.close()
-
-
-        #node.update_predecessor(args.creator)
-        #node.print_neighbours()
-        print "Node created on %s:%s \n" % (str(newip), str(newport))
     else:
         node = Node(newip, newport)
         node.server = server
         node.set_successor(node.address)
         node.set_predecessor(node.address)
-        print node.address
 
     def run_server():
         print 'Starting server, use <Ctrl-C> to stop'

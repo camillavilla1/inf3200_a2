@@ -35,3 +35,17 @@ Hints
 - With a little massaging, you might be able to get the `network-grapher` to
   print valid descriptions for [Graphviz]( http://www.graphviz.org/), or another
   visualization library, to get an actual graphical map of your network.
+
+
+
+RUN THE PROGRAM
+
+Open terminal and go to uvrocks
+Locate directory and run
+./node2.py --ip compute-X-X --port 8088
+
+open another terminal and go to uvrocks
+locate directory and run
+./test-client.py compute-X-X:8088
+
+./network-grapher.py compute-X-X:8088
